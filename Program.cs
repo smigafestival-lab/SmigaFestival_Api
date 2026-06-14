@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Microsoft.IdentityModel.Tokens;
 using Smigafestival.Application;
 using Smigafestival.Application.Common.Models;
 using Smigafestival.Infrastructure;
+using Smigafestival.Infrastructure.Persistence;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +57,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.UseSwagger();
 app.UseSwaggerUI();

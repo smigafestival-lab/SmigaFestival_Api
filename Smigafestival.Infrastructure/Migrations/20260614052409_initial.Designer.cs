@@ -12,8 +12,8 @@ using Smigafestival.Infrastructure.Persistence;
 namespace Smigafestival.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260606172753_Initial")]
-    partial class Initial
+    [Migration("20260614052409_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
