@@ -1,0 +1,6 @@
+@Smigafestival_HostAddress = http://localhost:5233
+
+GET {{Smigafestival_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
