@@ -26,6 +26,14 @@ public static class DependencyInjection
         };
         services.AddSingleton<IOptions<JwtOptions>>(Options.Create(jwtOptions));
 
+        var blobStorageSection = configuration.GetSection(BlobStorageOptions.SectionName);
+        var blobStorageOptions = new BlobStorageOptions
+        {
+            ConnectionString = blobStorageSection[nameof(BlobStorageOptions.ConnectionString)] ?? string.Empty,
+            ContainerName = blobStorageSection[nameof(BlobStorageOptions.ContainerName)] ?? string.Empty
+        };
+        services.AddSingleton(blobStorageOptions);
+
         services.AddDbContext<AppDbContext>(options =>
         {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
@@ -34,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 
         return services;
     }
