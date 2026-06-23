@@ -11,6 +11,8 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Post> Posts => Set<Post>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +33,35 @@ public sealed class AppDbContext : DbContext
 
             entity.HasIndex(user => user.NormalizedEmail).IsUnique();
             entity.HasIndex(user => user.NormalizedMobileNumber).IsUnique();
+        });
+
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.ToTable("Categories");
+            entity.HasKey(category => category.CategoryId);
+            entity.Property(category => category.CategoryName).HasMaxLength(200).IsRequired();
+            entity.Property(category => category.IsSpecial).HasDefaultValue(false);
+
+            entity.HasIndex(category => category.CategoryName).IsUnique();
+        });
+
+        modelBuilder.Entity<Post>(entity =>
+        {
+            entity.ToTable("Posts");
+            entity.HasKey(post => post.PostId);
+            entity.Property(post => post.PostName).HasMaxLength(200).IsRequired();
+            entity.Property(post => post.ImageUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(post => post.IsSpecial).HasDefaultValue(false);
+
+            entity.HasOne(post => post.Category)
+                .WithMany(category => category.Posts)
+                .HasForeignKey(post => post.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(post => post.CategoryId);
+            entity.HasIndex(post => post.PostShowDate);
         });
     }
 }
