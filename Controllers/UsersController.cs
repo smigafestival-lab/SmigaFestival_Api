@@ -41,7 +41,9 @@ public sealed class UsersController : ControllerBase
                 user.Email,
                 user.SubscribedUserId,
                 user.IsPaymentDone,
-                user.CreatedAtUtc
+                user.CreatedAtUtc,
+                user.BusinessName,
+                
             })
             .ToListAsync(cancellationToken);
 
@@ -94,7 +96,8 @@ public sealed class UsersController : ControllerBase
                 item.Email,
                 item.SubscribedUserId,
                 item.IsPaymentDone,
-                item.CreatedAtUtc
+                item.CreatedAtUtc,
+                item.BusinessName,
             })
             .FirstOrDefaultAsync(cancellationToken);
 

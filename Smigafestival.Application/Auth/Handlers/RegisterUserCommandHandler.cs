@@ -52,6 +52,7 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
             NormalizedMobileNumber = normalizedMobileNumber,
             Address = request.Address,
             Website = request.Website,
+            BusinessName = request.BusinessName,
             PasswordHash = _passwordHasherService.HashPassword(request.Password)
         };
 

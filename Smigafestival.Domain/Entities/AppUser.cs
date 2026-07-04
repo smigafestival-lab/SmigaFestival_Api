@@ -12,6 +12,8 @@ public class AppUser
     public string Address { get; init; } = string.Empty;
     public string? Website { get; init; } = string.Empty;
 
+    public string BusinessName { get; init; } = string.Empty;
+
     public string Email { get; set; } = string.Empty;
 
     public string NormalizedMobileNumber { get; set; } = string.Empty;

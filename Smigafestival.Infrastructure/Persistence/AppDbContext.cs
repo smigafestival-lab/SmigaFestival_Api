@@ -29,6 +29,7 @@ public sealed class AppDbContext : DbContext
             entity.Property(user => user.NormalizedMobileNumber).HasMaxLength(20).IsRequired();
             entity.Property(user => user.NormalizedEmail).HasMaxLength(256).IsRequired();
             entity.Property(user => user.PasswordHash).IsRequired();
+            entity.Property(user => user.BusinessName).IsRequired();
             entity.Property(user => user.SubscribedUserId).HasMaxLength(100);
             entity.Property(user => user.IsPaymentDone).HasDefaultValue(false);
             entity.Property(user => user.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");

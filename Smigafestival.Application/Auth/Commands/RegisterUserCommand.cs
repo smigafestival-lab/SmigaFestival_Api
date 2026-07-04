@@ -29,6 +29,9 @@ public sealed class RegisterUserCommand : IRequest<AuthResponse>
 
     public string? Website { get; init; } = string.Empty;
 
+    [StringLength(50)]
+    public string BusinessName { get; init; } = string.Empty;
+
     
     [Required]
     [EmailAddress]
