@@ -50,6 +50,8 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
             Email = request.Email.Trim(),
             NormalizedEmail = normalizedEmail,
             NormalizedMobileNumber = normalizedMobileNumber,
+            Address = request.Address,
+            Website = request.Website,
             PasswordHash = _passwordHasherService.HashPassword(request.Password)
         };
 

@@ -9,6 +9,8 @@ public class AppUser
     public string LastName { get; set; } = string.Empty;
 
     public string MobileNumber { get; set; } = string.Empty;
+    public string Address { get; init; } = string.Empty;
+    public string? Website { get; init; } = string.Empty;
 
     public string Email { get; set; } = string.Empty;
 
@@ -17,6 +19,10 @@ public class AppUser
     public string NormalizedEmail { get; set; } = string.Empty;
 
     public string PasswordHash { get; set; } = string.Empty;
+
+    public string? SubscribedUserId { get; set; }
+
+    public bool IsPaymentDone { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

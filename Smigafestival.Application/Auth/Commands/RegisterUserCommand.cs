@@ -18,6 +18,18 @@ public sealed class RegisterUserCommand : IRequest<AuthResponse>
     [StringLength(20)]
     public string MobileNumber { get; init; } = string.Empty;
 
+
+    [Required]
+    [StringLength(500)]
+
+    public string Address { get; init; } = string.Empty;
+
+
+    [StringLength(200)]
+
+    public string? Website { get; init; } = string.Empty;
+
+    
     [Required]
     [EmailAddress]
     [StringLength(256)]
