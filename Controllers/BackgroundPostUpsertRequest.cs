@@ -12,4 +12,7 @@ public sealed class BackgroundPostUpsertRequest
 
     [FromForm(Name = "file")]
     public IFormFile? File { get; set; }
+
+
+    public DateTime PostShowDate { get; set; }
 }

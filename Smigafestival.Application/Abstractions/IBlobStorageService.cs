@@ -9,4 +9,7 @@ public interface IBlobStorageService
         string fileName,
         string contentType,
         CancellationToken cancellationToken);
+
+
+    Uri GetBlobSasUri(string blobName, TimeSpan expiry);
 }

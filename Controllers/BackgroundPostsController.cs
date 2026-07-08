@@ -30,6 +30,7 @@ public sealed class BackgroundPostsController : ControllerBase
                 post.PostId,
                 post.PostName,
                 post.PostUrl,
+                post.PostShowDate,
                 post.CreatedAt,
                 post.UpdatedAt,
             })
@@ -49,6 +50,7 @@ public sealed class BackgroundPostsController : ControllerBase
                 item.PostId,
                 item.PostName,
                 item.PostUrl,
+                item.PostShowDate,
                 item.CreatedAt,
                 item.UpdatedAt,
             })
@@ -71,6 +73,7 @@ public sealed class BackgroundPostsController : ControllerBase
         var now = DateTime.UtcNow;
         var post = new BackgroundPost
         {
+            PostShowDate = request.PostShowDate,
             PostName = request.PostName.Trim(),
             PostUrl = postUrl,
             CreatedAt = now,
@@ -100,6 +103,7 @@ public sealed class BackgroundPostsController : ControllerBase
         }
 
         post.PostName = request.PostName.Trim();
+        post.PostShowDate = request.PostShowDate;
         if (request.File is not null)
         {
             post.PostUrl = await UploadFileAndGetUrlAsync(request.File, cancellationToken);
@@ -156,6 +160,6 @@ public sealed class BackgroundPostsController : ControllerBase
             file.ContentType,
             cancellationToken);
 
-        return result.Url.ToString();
+        return result.sasUri.ToString();
     }
 }

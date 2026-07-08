@@ -11,6 +11,7 @@ namespace Smigafestival.Controllers;
 public sealed class PostsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    
     private readonly IBlobStorageService _blobStorageService;
 
     public PostsController(AppDbContext dbContext, IBlobStorageService blobStorageService)
@@ -69,12 +70,14 @@ public sealed class PostsController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] PostUpsertRequest request, CancellationToken cancellationToken)
     {
+
         var validationMessage = await ValidatePostRequestAsync(request, cancellationToken, false);
         if (validationMessage is not null)
         {
             return BadRequest(new { message = validationMessage });
         }
 
+        
         var imageUrl = await ResolveImageUrlAsync(request, cancellationToken);
         var now = DateTime.UtcNow;
 
@@ -87,6 +90,8 @@ public sealed class PostsController : ControllerBase
             CreatedAt = now,
             UpdatedAt = now
         };
+
+
 
         await _dbContext.Posts.AddAsync(post, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -180,6 +185,6 @@ public sealed class PostsController : ControllerBase
             request.File.ContentType,
             cancellationToken);
 
-        return result.Url.ToString();
+        return result.sasUri.ToString();
     }
 }

@@ -5,4 +5,4 @@ public sealed record FileUploadResult(
     string FileName,
     string ContentType,
     long Size,
-    Uri Url);
+    Uri sasUri);
