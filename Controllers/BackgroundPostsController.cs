@@ -8,12 +8,12 @@ namespace Smigafestival.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class PostsController : ControllerBase
+public sealed class BackgroundPostsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IBlobStorageService _blobStorageService;
 
-    public PostsController(AppDbContext dbContext, IBlobStorageService blobStorageService)
+    public BackgroundPostsController(AppDbContext dbContext, IBlobStorageService blobStorageService)
     {
         _dbContext = dbContext;
         _blobStorageService = blobStorageService;
@@ -22,20 +22,16 @@ public sealed class PostsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var posts = await _dbContext.Posts
+        var posts = await _dbContext.BackgroundPosts
             .AsNoTracking()
-            .Include(post => post.Category)
-            .OrderByDescending(post => post.PostShowDate)
+            .OrderByDescending(post => post.CreatedAt)
             .Select(post => new
             {
                 post.PostId,
                 post.PostName,
+                post.PostUrl,
                 post.CreatedAt,
                 post.UpdatedAt,
-                post.ImageUrl,
-                post.CategoryId,
-                CategoryName = post.Category != null ? post.Category.CategoryName : null,
-                post.PostShowDate,
             })
             .ToListAsync(cancellationToken);
 
@@ -45,20 +41,16 @@ public sealed class PostsController : ControllerBase
     [HttpGet("{postId:guid}")]
     public async Task<IActionResult> GetById(Guid postId, CancellationToken cancellationToken)
     {
-        var post = await _dbContext.Posts
+        var post = await _dbContext.BackgroundPosts
             .AsNoTracking()
-            .Include(item => item.Category)
             .Where(item => item.PostId == postId)
             .Select(item => new
             {
                 item.PostId,
                 item.PostName,
+                item.PostUrl,
                 item.CreatedAt,
                 item.UpdatedAt,
-                item.ImageUrl,
-                item.CategoryId,
-                CategoryName = item.Category != null ? item.Category.CategoryName : null,
-                item.PostShowDate,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -67,28 +59,25 @@ public sealed class PostsController : ControllerBase
 
     [HttpPost]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> Create([FromForm] PostUpsertRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromForm] BackgroundPostUpsertRequest request, CancellationToken cancellationToken)
     {
-        var validationMessage = await ValidatePostRequestAsync(request, cancellationToken, false);
+        var validationMessage = ValidateRequest(request, isUpdate: false);
         if (validationMessage is not null)
         {
             return BadRequest(new { message = validationMessage });
         }
 
-        var imageUrl = await ResolveImageUrlAsync(request, cancellationToken);
+        var postUrl = await UploadFileAndGetUrlAsync(request.File!, cancellationToken);
         var now = DateTime.UtcNow;
-
-        var post = new Post
+        var post = new BackgroundPost
         {
             PostName = request.PostName.Trim(),
-            CategoryId = request.CategoryId,
-            PostShowDate = request.PostShowDate,
-            ImageUrl = imageUrl,
+            PostUrl = postUrl,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
-        await _dbContext.Posts.AddAsync(post, cancellationToken);
+        await _dbContext.BackgroundPosts.AddAsync(post, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { postId = post.PostId }, post);
@@ -96,29 +85,27 @@ public sealed class PostsController : ControllerBase
 
     [HttpPut("{postId:guid}")]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> Update(Guid postId, [FromForm] PostUpsertRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid postId, [FromForm] BackgroundPostUpsertRequest request, CancellationToken cancellationToken)
     {
-        var post = await _dbContext.Posts.FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
+        var post = await _dbContext.BackgroundPosts.FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
         if (post is null)
         {
             return NotFound();
         }
 
-        var validationMessage = await ValidatePostRequestAsync(request, cancellationToken, true);
+        var validationMessage = ValidateRequest(request, isUpdate: true);
         if (validationMessage is not null)
         {
             return BadRequest(new { message = validationMessage });
         }
 
         post.PostName = request.PostName.Trim();
-        post.CategoryId = request.CategoryId;
-        post.PostShowDate = request.PostShowDate;
-        post.UpdatedAt = DateTime.UtcNow;
-
         if (request.File is not null)
         {
-            post.ImageUrl = await ResolveImageUrlAsync(request, cancellationToken);
+            post.PostUrl = await UploadFileAndGetUrlAsync(request.File, cancellationToken);
         }
+
+        post.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -128,34 +115,23 @@ public sealed class PostsController : ControllerBase
     [HttpDelete("{postId:guid}")]
     public async Task<IActionResult> Delete(Guid postId, CancellationToken cancellationToken)
     {
-        var post = await _dbContext.Posts.FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
+        var post = await _dbContext.BackgroundPosts.FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
         if (post is null)
         {
             return NotFound();
         }
 
-        _dbContext.Posts.Remove(post);
+        _dbContext.BackgroundPosts.Remove(post);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
 
-    private async Task<string?> ValidatePostRequestAsync(
-        PostUpsertRequest request,
-        CancellationToken cancellationToken,
-        bool isUpdate)
+    private static string? ValidateRequest(BackgroundPostUpsertRequest request, bool isUpdate)
     {
         if (string.IsNullOrWhiteSpace(request.PostName))
         {
             return "PostName is required.";
-        }
-
-        var categoryExists = await _dbContext.Categories
-            .AnyAsync(category => category.CategoryId == request.CategoryId, cancellationToken);
-
-        if (!categoryExists)
-        {
-            return "CategoryId is invalid.";
         }
 
         if (!isUpdate && request.File is null)
@@ -171,13 +147,13 @@ public sealed class PostsController : ControllerBase
         return null;
     }
 
-    private async Task<string> ResolveImageUrlAsync(PostUpsertRequest request, CancellationToken cancellationToken)
+    private async Task<string> UploadFileAndGetUrlAsync(IFormFile file, CancellationToken cancellationToken)
     {
-        await using var stream = request.File!.OpenReadStream();
+        await using var stream = file.OpenReadStream();
         var result = await _blobStorageService.UploadAsync(
             stream,
-            request.File.FileName,
-            request.File.ContentType,
+            file.FileName,
+            file.ContentType,
             cancellationToken);
 
         return result.Url.ToString();

@@ -26,7 +26,6 @@ public sealed class CategoriesController : ControllerBase
             {
                 category.CategoryId,
                 category.CategoryName,
-                category.IsSpecial
             })
             .ToListAsync(cancellationToken);
 
@@ -43,7 +42,6 @@ public sealed class CategoriesController : ControllerBase
             {
                 item.CategoryId,
                 item.CategoryName,
-                item.IsSpecial
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -70,7 +68,6 @@ public sealed class CategoriesController : ControllerBase
         var category = new Category
         {
             CategoryName = categoryName,
-            IsSpecial = request.IsSpecial
         };
 
         await _dbContext.Categories.AddAsync(category, cancellationToken);
@@ -103,7 +100,6 @@ public sealed class CategoriesController : ControllerBase
         }
 
         category.CategoryName = categoryName;
-        category.IsSpecial = request.IsSpecial;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

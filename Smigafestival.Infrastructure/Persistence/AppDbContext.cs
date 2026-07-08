@@ -13,6 +13,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Post> Posts => Set<Post>();
+    public DbSet<BackgroundPost> BackgroundPosts => Set<BackgroundPost>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,7 +46,6 @@ public sealed class AppDbContext : DbContext
             entity.ToTable("Categories");
             entity.HasKey(category => category.CategoryId);
             entity.Property(category => category.CategoryName).HasMaxLength(200).IsRequired();
-            entity.Property(category => category.IsSpecial).HasDefaultValue(false);
 
             entity.HasIndex(category => category.CategoryName).IsUnique();
         });
@@ -58,7 +58,6 @@ public sealed class AppDbContext : DbContext
             entity.Property(post => post.ImageUrl).HasMaxLength(2048).IsRequired();
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
-            entity.Property(post => post.IsSpecial).HasDefaultValue(false);
 
             entity.HasOne(post => post.Category)
                 .WithMany(category => category.Posts)
@@ -67,6 +66,16 @@ public sealed class AppDbContext : DbContext
 
             entity.HasIndex(post => post.CategoryId);
             entity.HasIndex(post => post.PostShowDate);
+        });
+
+        modelBuilder.Entity<BackgroundPost>(entity =>
+        {
+            entity.ToTable("BackgroundPost");
+            entity.HasKey(post => post.PostId);
+            entity.Property(post => post.PostName).HasMaxLength(200).IsRequired();
+            entity.Property(post => post.PostUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
         });
     }
 }

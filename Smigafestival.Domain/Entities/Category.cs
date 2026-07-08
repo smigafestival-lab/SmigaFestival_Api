@@ -6,7 +6,6 @@ public sealed class Category
 
     public string CategoryName { get; set; } = string.Empty;
 
-    public bool IsSpecial { get; set; }
 
     public ICollection<Post> Posts { get; set; } = new List<Post>();
 }
