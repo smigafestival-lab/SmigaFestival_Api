@@ -25,7 +25,7 @@ public sealed class PostsController : ControllerBase
     {
         var posts = await _dbContext.Posts
             .AsNoTracking()
-            .OrderByDescending(post => post.PostShowDate)
+            .OrderByDescending(post => post.CreatedAt)
             .Select(post => new
             {
                 post.PostId,
@@ -33,7 +33,6 @@ public sealed class PostsController : ControllerBase
                 post.CreatedAt,
                 post.UpdatedAt,
                 post.ImageUrl,
-                post.PostShowDate,
                 post.SubscribedUserId,
                 post.IsFavorite,
             })
@@ -63,7 +62,7 @@ public sealed class PostsController : ControllerBase
         var posts = await _dbContext.Posts
             .AsNoTracking()
             .Where(post => post.SubscribedUserId == normalizedSubscribedUserId)
-            .OrderByDescending(post => post.PostShowDate)
+            .OrderByDescending(post => post.CreatedAt)
             .Select(post => new
             {
                 post.PostId,
@@ -71,7 +70,6 @@ public sealed class PostsController : ControllerBase
                 post.CreatedAt,
                 post.UpdatedAt,
                 post.ImageUrl,
-                post.PostShowDate,
                 post.SubscribedUserId,
                 post.IsFavorite,
             })
@@ -93,7 +91,6 @@ public sealed class PostsController : ControllerBase
                 item.CreatedAt,
                 item.UpdatedAt,
                 item.ImageUrl,
-                item.PostShowDate,
                 item.SubscribedUserId,
                 item.IsFavorite,
             })
@@ -120,7 +117,6 @@ public sealed class PostsController : ControllerBase
         var post = new Post
         {
             PostName = request.PostName.Trim(),
-            PostShowDate = request.PostShowDate,
             SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId),
             IsFavorite = request.IsFavorite,
             ImageUrl = imageUrl,
@@ -153,7 +149,6 @@ public sealed class PostsController : ControllerBase
         }
 
         post.PostName = request.PostName.Trim();
-        post.PostShowDate = request.PostShowDate;
         post.SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId);
         post.IsFavorite = request.IsFavorite;
         post.UpdatedAt = DateTime.UtcNow;

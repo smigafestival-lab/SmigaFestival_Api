@@ -12,8 +12,6 @@ public sealed class Post
 
     public string ImageUrl { get; set; } = string.Empty;
 
-    public DateTime PostShowDate { get; set; }
-
     public string? SubscribedUserId { get; set; }
 
     public bool IsFavorite { get; set; }

@@ -62,7 +62,6 @@ public sealed class AppDbContext : DbContext
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-            entity.HasIndex(post => post.PostShowDate);
             entity.HasIndex(post => post.SubscribedUserId);
         });
 
