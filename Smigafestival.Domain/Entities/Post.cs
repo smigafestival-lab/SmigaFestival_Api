@@ -12,13 +12,9 @@ public sealed class Post
 
     public string ImageUrl { get; set; } = string.Empty;
 
-    public Guid CategoryId { get; set; }
-
     public DateTime PostShowDate { get; set; }
 
     public string? SubscribedUserId { get; set; }
 
     public bool IsFavorite { get; set; }
-
-    public Category? Category { get; set; }
 }

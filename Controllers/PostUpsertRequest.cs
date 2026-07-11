@@ -10,9 +10,6 @@ public sealed class PostUpsertRequest
     [FromForm(Name = "postName")]
     public string PostName { get; set; } = string.Empty;
 
-    [FromForm(Name = "categoryId")]
-    public Guid CategoryId { get; set; }
-
     [FromForm(Name = "postShowDate")]
     public DateTime PostShowDate { get; set; }
 

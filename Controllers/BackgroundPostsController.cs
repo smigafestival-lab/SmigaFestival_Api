@@ -24,11 +24,14 @@ public sealed class BackgroundPostsController : ControllerBase
     {
         var posts = await _dbContext.BackgroundPosts
             .AsNoTracking()
+            .Include(post => post.Category)
             .OrderByDescending(post => post.CreatedAt)
             .Select(post => new
             {
                 post.PostId,
                 post.PostName,
+                post.CategoryId,
+                CategoryName = post.Category != null ? post.Category.CategoryName : null,
                 post.PostUrl,
                 post.PostShowDate,
                 post.CreatedAt,
@@ -44,11 +47,14 @@ public sealed class BackgroundPostsController : ControllerBase
     {
         var post = await _dbContext.BackgroundPosts
             .AsNoTracking()
+            .Include(item => item.Category)
             .Where(item => item.PostId == postId)
             .Select(item => new
             {
                 item.PostId,
                 item.PostName,
+                item.CategoryId,
+                CategoryName = item.Category != null ? item.Category.CategoryName : null,
                 item.PostUrl,
                 item.PostShowDate,
                 item.CreatedAt,
@@ -63,27 +69,35 @@ public sealed class BackgroundPostsController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] BackgroundPostUpsertRequest request, CancellationToken cancellationToken)
     {
-        var validationMessage = ValidateRequest(request, isUpdate: false);
+        var validationMessage = await ValidateRequestAsync(request, cancellationToken, isUpdate: false);
         if (validationMessage is not null)
         {
             return BadRequest(new { message = validationMessage });
         }
 
-        var postUrl = await UploadFileAndGetUrlAsync(request.File!, cancellationToken);
         var now = DateTime.UtcNow;
-        var post = new BackgroundPost
-        {
-            PostShowDate = request.PostShowDate,
-            PostName = request.PostName.Trim(),
-            PostUrl = postUrl,
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
+        var files = GetFiles(request);
+        var posts = new List<BackgroundPost>();
 
-        await _dbContext.BackgroundPosts.AddAsync(post, cancellationToken);
+        foreach (var file in files)
+        {
+            var post = new BackgroundPost
+            {
+                CategoryId = request.CategoryId,
+                PostShowDate = request.PostShowDate,
+                PostName = request.PostName,
+                PostUrl = await UploadFileAndGetUrlAsync(file, cancellationToken),
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+
+            posts.Add(post);
+        }
+
+        await _dbContext.BackgroundPosts.AddRangeAsync(posts, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { postId = post.PostId }, post);
+        return Ok(posts);
     }
 
     [HttpPut("{postId:guid}")]
@@ -96,13 +110,14 @@ public sealed class BackgroundPostsController : ControllerBase
             return NotFound();
         }
 
-        var validationMessage = ValidateRequest(request, isUpdate: true);
+        var validationMessage = await ValidateRequestAsync(request, cancellationToken, isUpdate: true);
         if (validationMessage is not null)
         {
             return BadRequest(new { message = validationMessage });
         }
 
-        post.PostName = request.PostName.Trim();
+        post.PostName = request.PostName;
+        post.CategoryId = request.CategoryId;
         post.PostShowDate = request.PostShowDate;
         if (request.File is not null)
         {
@@ -131,21 +146,38 @@ public sealed class BackgroundPostsController : ControllerBase
         return NoContent();
     }
 
-    private static string? ValidateRequest(BackgroundPostUpsertRequest request, bool isUpdate)
+    private async Task<string?> ValidateRequestAsync(
+        BackgroundPostUpsertRequest request,
+        CancellationToken cancellationToken,
+        bool isUpdate)
     {
-        if (string.IsNullOrWhiteSpace(request.PostName))
+        var categoryExists = await _dbContext.Categories
+            .AnyAsync(category => category.CategoryId == request.CategoryId, cancellationToken);
+
+        if (!categoryExists)
         {
-            return "PostName is required.";
+            return "CategoryId is invalid.";
         }
 
-        if (!isUpdate && request.File is null)
+        var files = GetFiles(request);
+        if (!isUpdate && files.Count == 0)
         {
-            return "File is required.";
+            return "At least one file is required.";
         }
 
-        if (request.File is not null && request.File.Length == 0)
+        if (request.File is not null && request.Files is not null && request.Files.Count > 0)
+        {
+            return "Use either file or files in the request, not both.";
+        }
+
+        if (files.Any(file => file.Length == 0))
         {
             return "File must not be empty.";
+        }
+
+        if (isUpdate && request.Files is not null && request.Files.Count > 0)
+        {
+            return "Multiple file upload is only supported while creating background posts.";
         }
 
         return null;
@@ -161,5 +193,26 @@ public sealed class BackgroundPostsController : ControllerBase
             cancellationToken);
 
         return result.sasUri.ToString();
+    }
+
+    private static List<IFormFile> GetFiles(BackgroundPostUpsertRequest request)
+    {
+        var files = new List<IFormFile>();
+        if (request.File is not null)
+        {
+            files.Add(request.File);
+        }
+
+        if (request.Files is not null)
+        {
+            files.AddRange(request.Files.Where(file => file is not null));
+        }
+
+        return files;
+    }
+
+    private static string ResolveSinglePostName(BackgroundPostUpsertRequest request)
+    {
+        return request.PostName!.Trim();
     }
 }

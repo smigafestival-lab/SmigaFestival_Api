@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Smigafestival.Application.Abstractions;
 using Smigafestival.Domain.Entities;
 using Smigafestival.Infrastructure.Persistence;
 
@@ -10,10 +11,12 @@ namespace Smigafestival.Controllers;
 public sealed class CategoriesController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IBlobStorageService _blobStorageService;
 
-    public CategoriesController(AppDbContext dbContext)
+    public CategoriesController(AppDbContext dbContext, IBlobStorageService blobStorageService)
     {
         _dbContext = dbContext;
+        _blobStorageService = blobStorageService;
     }
 
     [HttpGet]
@@ -26,6 +29,7 @@ public sealed class CategoriesController : ControllerBase
             {
                 category.CategoryId,
                 category.CategoryName,
+                category.ImageUrl,
             })
             .ToListAsync(cancellationToken);
 
@@ -42,6 +46,7 @@ public sealed class CategoriesController : ControllerBase
             {
                 item.CategoryId,
                 item.CategoryName,
+                item.ImageUrl,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -49,12 +54,18 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CategoryUpsertRequest request, CancellationToken cancellationToken)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Create([FromForm] CategoryUpsertRequest request, CancellationToken cancellationToken)
     {
         var categoryName = request.CategoryName.Trim();
         if (string.IsNullOrWhiteSpace(categoryName))
         {
             return BadRequest(new { message = "CategoryName is required." });
+        }
+
+        if (request.File is null || request.File.Length == 0)
+        {
+            return BadRequest(new { message = "Image file is required." });
         }
 
         var exists = await _dbContext.Categories
@@ -65,9 +76,11 @@ public sealed class CategoriesController : ControllerBase
             return Conflict(new { message = "A category with the same name already exists." });
         }
 
+        var imageUrl = await UploadFileAndGetUrlAsync(request.File, cancellationToken);
         var category = new Category
         {
             CategoryName = categoryName,
+            ImageUrl = imageUrl,
         };
 
         await _dbContext.Categories.AddAsync(category, cancellationToken);
@@ -77,7 +90,8 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpPut("{categoryId:guid}")]
-    public async Task<IActionResult> Update(Guid categoryId, [FromBody] CategoryUpsertRequest request, CancellationToken cancellationToken)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Update(Guid categoryId, [FromForm] CategoryUpsertRequest request, CancellationToken cancellationToken)
     {
         var category = await _dbContext.Categories.FirstOrDefaultAsync(item => item.CategoryId == categoryId, cancellationToken);
         if (category is null)
@@ -100,6 +114,15 @@ public sealed class CategoriesController : ControllerBase
         }
 
         category.CategoryName = categoryName;
+        if (request.File is not null)
+        {
+            if (request.File.Length == 0)
+            {
+                return BadRequest(new { message = "Image file must not be empty." });
+            }
+
+            category.ImageUrl = await UploadFileAndGetUrlAsync(request.File, cancellationToken);
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -115,15 +138,27 @@ public sealed class CategoriesController : ControllerBase
             return NotFound();
         }
 
-        var isUsedByPosts = await _dbContext.Posts.AnyAsync(post => post.CategoryId == categoryId, cancellationToken);
+        var isUsedByPosts = await _dbContext.BackgroundPosts.AnyAsync(post => post.CategoryId == categoryId, cancellationToken);
         if (isUsedByPosts)
         {
-            return Conflict(new { message = "This category is already linked to posts and cannot be removed." });
+            return Conflict(new { message = "This category is already linked to background posts and cannot be removed." });
         }
 
         _dbContext.Categories.Remove(category);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return NoContent();
+    }
+
+    private async Task<string> UploadFileAndGetUrlAsync(IFormFile file, CancellationToken cancellationToken)
+    {
+        await using var stream = file.OpenReadStream();
+        var result = await _blobStorageService.UploadAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            cancellationToken);
+
+        return result.sasUri.ToString();
     }
 }

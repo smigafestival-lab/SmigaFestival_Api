@@ -25,7 +25,6 @@ public sealed class PostsController : ControllerBase
     {
         var posts = await _dbContext.Posts
             .AsNoTracking()
-            .Include(post => post.Category)
             .OrderByDescending(post => post.PostShowDate)
             .Select(post => new
             {
@@ -34,8 +33,6 @@ public sealed class PostsController : ControllerBase
                 post.CreatedAt,
                 post.UpdatedAt,
                 post.ImageUrl,
-                post.CategoryId,
-                CategoryName = post.Category != null ? post.Category.CategoryName : null,
                 post.PostShowDate,
                 post.SubscribedUserId,
                 post.IsFavorite,
@@ -65,7 +62,6 @@ public sealed class PostsController : ControllerBase
 
         var posts = await _dbContext.Posts
             .AsNoTracking()
-            .Include(post => post.Category)
             .Where(post => post.SubscribedUserId == normalizedSubscribedUserId)
             .OrderByDescending(post => post.PostShowDate)
             .Select(post => new
@@ -75,8 +71,6 @@ public sealed class PostsController : ControllerBase
                 post.CreatedAt,
                 post.UpdatedAt,
                 post.ImageUrl,
-                post.CategoryId,
-                CategoryName = post.Category != null ? post.Category.CategoryName : null,
                 post.PostShowDate,
                 post.SubscribedUserId,
                 post.IsFavorite,
@@ -91,7 +85,6 @@ public sealed class PostsController : ControllerBase
     {
         var post = await _dbContext.Posts
             .AsNoTracking()
-            .Include(item => item.Category)
             .Where(item => item.PostId == postId)
             .Select(item => new
             {
@@ -100,8 +93,6 @@ public sealed class PostsController : ControllerBase
                 item.CreatedAt,
                 item.UpdatedAt,
                 item.ImageUrl,
-                item.CategoryId,
-                CategoryName = item.Category != null ? item.Category.CategoryName : null,
                 item.PostShowDate,
                 item.SubscribedUserId,
                 item.IsFavorite,
@@ -129,7 +120,6 @@ public sealed class PostsController : ControllerBase
         var post = new Post
         {
             PostName = request.PostName.Trim(),
-            CategoryId = request.CategoryId,
             PostShowDate = request.PostShowDate,
             SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId),
             IsFavorite = request.IsFavorite,
@@ -163,7 +153,6 @@ public sealed class PostsController : ControllerBase
         }
 
         post.PostName = request.PostName.Trim();
-        post.CategoryId = request.CategoryId;
         post.PostShowDate = request.PostShowDate;
         post.SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId);
         post.IsFavorite = request.IsFavorite;
@@ -202,14 +191,6 @@ public sealed class PostsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.PostName))
         {
             return "PostName is required.";
-        }
-
-        var categoryExists = await _dbContext.Categories
-            .AnyAsync(category => category.CategoryId == request.CategoryId, cancellationToken);
-
-        if (!categoryExists)
-        {
-            return "CategoryId is invalid.";
         }
 
         var subscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId);

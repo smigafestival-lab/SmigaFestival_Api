@@ -6,6 +6,7 @@ public sealed class Category
 
     public string CategoryName { get; set; } = string.Empty;
 
+    public string ImageUrl { get; set; } = string.Empty;
 
-    public ICollection<Post> Posts { get; set; } = new List<Post>();
+    public ICollection<BackgroundPost> BackgroundPosts { get; set; } = new List<BackgroundPost>();
 }

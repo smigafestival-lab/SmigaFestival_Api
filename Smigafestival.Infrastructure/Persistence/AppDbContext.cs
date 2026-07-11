@@ -46,6 +46,7 @@ public sealed class AppDbContext : DbContext
             entity.ToTable("Categories");
             entity.HasKey(category => category.CategoryId);
             entity.Property(category => category.CategoryName).HasMaxLength(200).IsRequired();
+            entity.Property(category => category.ImageUrl).HasMaxLength(2048).IsRequired();
 
             entity.HasIndex(category => category.CategoryName).IsUnique();
         });
@@ -61,12 +62,6 @@ public sealed class AppDbContext : DbContext
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-            entity.HasOne(post => post.Category)
-                .WithMany(category => category.Posts)
-                .HasForeignKey(post => post.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(post => post.CategoryId);
             entity.HasIndex(post => post.PostShowDate);
             entity.HasIndex(post => post.SubscribedUserId);
         });
@@ -79,6 +74,15 @@ public sealed class AppDbContext : DbContext
             entity.Property(post => post.PostUrl).HasMaxLength(2048).IsRequired();
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(post => post.Category)
+                .WithMany(category => category.BackgroundPosts)
+                .HasForeignKey(post => post.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            entity.HasIndex(post => post.CategoryId);
+            entity.HasIndex(post => post.PostShowDate);
         });
     }
 }
