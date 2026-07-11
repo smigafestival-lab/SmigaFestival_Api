@@ -42,6 +42,28 @@ public sealed class BackgroundPostsController : ControllerBase
         return Ok(posts);
     }
 
+    [HttpGet("Category/{CategoryId:guid}")]
+
+    public async Task<IActionResult> GetByCategoryId(Guid CategoryId,CancellationToken cancellationToken)
+    {
+        var post = await _dbContext.BackgroundPosts
+            .AsNoTracking()
+            .Where(item => item.CategoryId == CategoryId)
+            .Select(item => new
+            {
+                item.PostId,
+                item.PostName,
+                item.CategoryId,
+                CategoryName = item.Category != null ? item.Category.CategoryName : null,
+                item.PostUrl,
+                item.PostShowDate,
+                item.CreatedAt,
+                item.UpdatedAt,
+            }).ToListAsync(cancellationToken);
+
+        return post is null ? NotFound() : Ok(post);
+    }
+
     [HttpGet("{postId:guid}")]
     public async Task<IActionResult> GetById(Guid postId, CancellationToken cancellationToken)
     {
