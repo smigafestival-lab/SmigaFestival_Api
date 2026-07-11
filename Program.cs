@@ -7,7 +7,6 @@ using Smigafestival.Application.Common.Models;
 using Smigafestival.Infrastructure;
 using Smigafestival.Infrastructure.Persistence;
 using System.Text;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,9 +64,9 @@ builder.Services.AddCors(Options =>
     });
 });
 
+
+
 var app = builder.Build();
-
-
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -78,6 +77,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
