@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -48,6 +49,40 @@ public sealed class UsersController : ControllerBase
             .ToListAsync(cancellationToken);
 
         return Ok(users);
+    }
+
+    [HttpPost("{userId:guid}/subscribed-user-id")]
+    public async Task<IActionResult> GenerateSubscribedUserId(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        user.SubscribedUserId = await GenerateUniqueSubscribedUserIdAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            user.Id,
+            user.SubscribedUserId
+        });
+    }
+
+    [HttpDelete("{userId:guid}/subscribed-user-id")]
+    public async Task<IActionResult> DeleteSubscribedUserId(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        user.SubscribedUserId = null;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
     }
 
     [AllowAnonymous]
@@ -122,5 +157,20 @@ public sealed class UsersController : ControllerBase
         };
 
         return tokenHandler.ValidateToken(token, validationParameters, out _);
+    }
+
+    private async Task<string> GenerateUniqueSubscribedUserIdAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            var candidate = $"SUB-{Convert.ToHexString(RandomNumberGenerator.GetBytes(6))}";
+            var exists = await _dbContext.Users
+                .AnyAsync(item => item.SubscribedUserId == candidate, cancellationToken);
+
+            if (!exists)
+            {
+                return candidate;
+            }
+        }
     }
 }

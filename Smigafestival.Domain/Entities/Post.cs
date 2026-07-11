@@ -16,5 +16,9 @@ public sealed class Post
 
     public DateTime PostShowDate { get; set; }
 
+    public string? SubscribedUserId { get; set; }
+
+    public bool IsFavorite { get; set; }
+
     public Category? Category { get; set; }
 }

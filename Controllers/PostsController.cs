@@ -37,6 +37,49 @@ public sealed class PostsController : ControllerBase
                 post.CategoryId,
                 CategoryName = post.Category != null ? post.Category.CategoryName : null,
                 post.PostShowDate,
+                post.SubscribedUserId,
+                post.IsFavorite,
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(posts);
+    }
+
+    [HttpGet("by-subscribed-user/{subscribedUserId}")]
+    public async Task<IActionResult> GetBySubscribedUserId(string subscribedUserId, CancellationToken cancellationToken)
+    {
+        var normalizedSubscribedUserId = subscribedUserId.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedSubscribedUserId))
+        {
+            return BadRequest(new { message = "SubscribedUserId is required." });
+        }
+
+        var userExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(user => user.SubscribedUserId == normalizedSubscribedUserId, cancellationToken);
+
+        if (!userExists)
+        {
+            return NotFound(new { message = "Subscribed user not found." });
+        }
+
+        var posts = await _dbContext.Posts
+            .AsNoTracking()
+            .Include(post => post.Category)
+            .Where(post => post.SubscribedUserId == normalizedSubscribedUserId)
+            .OrderByDescending(post => post.PostShowDate)
+            .Select(post => new
+            {
+                post.PostId,
+                post.PostName,
+                post.CreatedAt,
+                post.UpdatedAt,
+                post.ImageUrl,
+                post.CategoryId,
+                CategoryName = post.Category != null ? post.Category.CategoryName : null,
+                post.PostShowDate,
+                post.SubscribedUserId,
+                post.IsFavorite,
             })
             .ToListAsync(cancellationToken);
 
@@ -60,6 +103,8 @@ public sealed class PostsController : ControllerBase
                 item.CategoryId,
                 CategoryName = item.Category != null ? item.Category.CategoryName : null,
                 item.PostShowDate,
+                item.SubscribedUserId,
+                item.IsFavorite,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -86,6 +131,8 @@ public sealed class PostsController : ControllerBase
             PostName = request.PostName.Trim(),
             CategoryId = request.CategoryId,
             PostShowDate = request.PostShowDate,
+            SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId),
+            IsFavorite = request.IsFavorite,
             ImageUrl = imageUrl,
             CreatedAt = now,
             UpdatedAt = now
@@ -118,6 +165,8 @@ public sealed class PostsController : ControllerBase
         post.PostName = request.PostName.Trim();
         post.CategoryId = request.CategoryId;
         post.PostShowDate = request.PostShowDate;
+        post.SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId);
+        post.IsFavorite = request.IsFavorite;
         post.UpdatedAt = DateTime.UtcNow;
 
         if (request.File is not null)
@@ -163,6 +212,18 @@ public sealed class PostsController : ControllerBase
             return "CategoryId is invalid.";
         }
 
+        var subscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId);
+        if (subscribedUserId is not null)
+        {
+            var userExists = await _dbContext.Users
+                .AnyAsync(user => user.SubscribedUserId == subscribedUserId, cancellationToken);
+
+            if (!userExists)
+            {
+                return "SubscribedUserId is invalid.";
+            }
+        }
+
         if (!isUpdate && request.File is null)
         {
             return "File is required.";
@@ -186,5 +247,10 @@ public sealed class PostsController : ControllerBase
             cancellationToken);
 
         return result.sasUri.ToString();
+    }
+
+    private static string? NormalizeSubscribedUserId(string? subscribedUserId)
+    {
+        return string.IsNullOrWhiteSpace(subscribedUserId) ? null : subscribedUserId.Trim();
     }
 }

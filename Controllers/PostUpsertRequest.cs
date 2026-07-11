@@ -16,6 +16,12 @@ public sealed class PostUpsertRequest
     [FromForm(Name = "postShowDate")]
     public DateTime PostShowDate { get; set; }
 
+    [FromForm(Name = "subscribedUserId")]
+    public string? SubscribedUserId { get; set; }
+
+    [FromForm(Name = "isFavorite")]
+    public bool IsFavorite { get; set; }
+
     [FromForm(Name = "file")]
     public IFormFile? File { get; set; }
 }

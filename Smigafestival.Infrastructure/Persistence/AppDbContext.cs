@@ -56,6 +56,8 @@ public sealed class AppDbContext : DbContext
             entity.HasKey(post => post.PostId);
             entity.Property(post => post.PostName).HasMaxLength(200).IsRequired();
             entity.Property(post => post.ImageUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(post => post.SubscribedUserId).HasMaxLength(100);
+            entity.Property(post => post.IsFavorite).HasDefaultValue(false);
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
@@ -66,6 +68,7 @@ public sealed class AppDbContext : DbContext
 
             entity.HasIndex(post => post.CategoryId);
             entity.HasIndex(post => post.PostShowDate);
+            entity.HasIndex(post => post.SubscribedUserId);
         });
 
         modelBuilder.Entity<BackgroundPost>(entity =>
