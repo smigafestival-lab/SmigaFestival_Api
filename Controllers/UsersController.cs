@@ -36,6 +36,7 @@ public sealed class UsersController : ControllerBase
                 user.Id,
                 user.FirstName,
                 user.LastName,
+                user.Role,
                 user.MobileNumber,
                 user.Address,
                 user.Website,
@@ -85,7 +86,6 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
-    [AllowAnonymous]
     [HttpPost("deserialize-token")]
     public async Task<IActionResult> DeserializeToken(
         [FromBody] DeserializeTokenRequest request,
@@ -125,6 +125,7 @@ public sealed class UsersController : ControllerBase
                 item.Id,
                 item.FirstName,
                 item.LastName,
+                item.Role,
                 item.MobileNumber,
                 item.Address,
                 item.Website,

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Smigafestival.Application.Abstractions;
 using Smigafestival.Application.Common.Models;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Domain.Entities;
 
 namespace Smigafestival.Infrastructure.Services;
@@ -31,6 +32,7 @@ public sealed class JwtTokenService : IJwtTokenService
             new(ClaimTypes.GivenName, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
             new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, string.IsNullOrWhiteSpace(user.Role) ? AppRoles.User : user.Role),
             new("mobile_number", user.MobileNumber)
         };
 
@@ -47,6 +49,7 @@ public sealed class JwtTokenService : IJwtTokenService
             user.LastName,
             user.MobileNumber,
             user.Email,
+            string.IsNullOrWhiteSpace(user.Role) ? AppRoles.User : user.Role,
             new JwtSecurityTokenHandler().WriteToken(token),
             expiresAtUtc);
     }

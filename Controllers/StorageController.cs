@@ -15,7 +15,6 @@ public sealed class StorageController : ControllerBase
         _blobStorageService = blobStorageService;
     }
 
-    [AllowAnonymous]
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Upload([FromForm] UploadFileRequest request, CancellationToken cancellationToken)

@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smigafestival.Application.Abstractions;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Domain.Entities;
 using Smigafestival.Infrastructure.Persistence;
 
@@ -18,7 +20,7 @@ public sealed class BackgroundPostsController : ControllerBase
         _dbContext = dbContext;
         _blobStorageService = blobStorageService;
     }
-
+    
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
@@ -88,6 +90,7 @@ public sealed class BackgroundPostsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] BackgroundPostUpsertRequest request, CancellationToken cancellationToken)
     {

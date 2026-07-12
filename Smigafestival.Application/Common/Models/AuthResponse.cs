@@ -6,5 +6,6 @@ public sealed record AuthResponse(
     string LastName,
     string MobileNumber,
     string Email,
+    string Role,
     string Token,
     DateTime ExpiresAtUtc);

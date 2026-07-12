@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Domain.Entities;
 
 namespace Smigafestival.Infrastructure.Persistence;
@@ -33,6 +34,10 @@ public sealed class AppDbContext : DbContext
             entity.Property(user => user.BusinessName).IsRequired();
             entity.Property(user => user.SubscribedUserId).HasMaxLength(100);
             entity.Property(user => user.IsPaymentDone).HasDefaultValue(false);
+            entity.Property(user => user.Role)
+                .HasMaxLength(20)
+                .IsRequired()
+                .HasDefaultValue(AppRoles.User);
             entity.Property(user => user.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(user => user.Address).HasMaxLength(500).IsRequired();
             entity.Property(user => user.Website).HasMaxLength(200);

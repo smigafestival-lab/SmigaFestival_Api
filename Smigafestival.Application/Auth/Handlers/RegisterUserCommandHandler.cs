@@ -2,6 +2,7 @@ using MediatR;
 using Smigafestival.Application.Abstractions;
 using Smigafestival.Application.Auth.Commands;
 using Smigafestival.Application.Common.Models;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Domain.Entities;
 
 namespace Smigafestival.Application.Auth.Handlers;
@@ -53,6 +54,7 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
             Address = request.Address,
             Website = request.Website,
             BusinessName = request.BusinessName,
+            Role = AppRoles.User,
             PasswordHash = _passwordHasherService.HashPassword(request.Password)
         };
 

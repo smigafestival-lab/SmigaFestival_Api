@@ -26,5 +26,7 @@ public class AppUser
 
     public bool IsPaymentDone { get; set; }
 
+    public string Role { get; set; } = "User";
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
