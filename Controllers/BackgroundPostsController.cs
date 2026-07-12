@@ -126,6 +126,7 @@ public sealed class BackgroundPostsController : ControllerBase
     }
 
     [HttpPut("{postId:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Update(Guid postId, [FromForm] BackgroundPostUpsertRequest request, CancellationToken cancellationToken)
     {
@@ -157,6 +158,7 @@ public sealed class BackgroundPostsController : ControllerBase
     }
 
     [HttpDelete("{postId:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(Guid postId, CancellationToken cancellationToken)
     {
         var post = await _dbContext.BackgroundPosts.FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);

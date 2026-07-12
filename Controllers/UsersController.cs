@@ -1,14 +1,15 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Smigafestival.Application.Common.Models;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Infrastructure.Persistence;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Smigafestival.Controllers;
 
@@ -26,6 +27,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var users = await _dbContext.Users
@@ -53,6 +55,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [HttpPost("{userId:guid}/subscribed-user-id")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> GenerateSubscribedUserId(Guid userId, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
@@ -72,6 +75,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [HttpDelete("{userId:guid}/subscribed-user-id")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteSubscribedUserId(Guid userId, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);

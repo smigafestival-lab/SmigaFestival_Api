@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smigafestival.Application.Abstractions;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Domain.Entities;
 using Smigafestival.Infrastructure.Persistence;
 
@@ -54,6 +56,7 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] CategoryUpsertRequest request, CancellationToken cancellationToken)
     {
@@ -90,6 +93,7 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpPut("{categoryId:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Update(Guid categoryId, [FromForm] CategoryUpsertRequest request, CancellationToken cancellationToken)
     {
@@ -130,6 +134,7 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpDelete("{categoryId:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Delete(Guid categoryId, CancellationToken cancellationToken)
     {
         var category = await _dbContext.Categories.FirstOrDefaultAsync(item => item.CategoryId == categoryId, cancellationToken);
