@@ -14,5 +14,4 @@ public sealed class Post
 
     public string? SubscribedUserId { get; set; }
 
-    public bool IsFavorite { get; set; }
 }

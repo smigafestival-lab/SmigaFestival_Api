@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Smigafestival.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Smigafestival.Infrastructure.Persistence;
 namespace Smigafestival.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715160937_RemoveIsFaveroit")]
+    partial class RemoveIsFaveroit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,6 +146,9 @@ namespace Smigafestival.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<bool>("isFavorite")
+                        .HasColumnType("bit");
+
                     b.HasKey("PostId");
 
                     b.HasIndex("CategoryId");
@@ -211,36 +217,6 @@ namespace Smigafestival.Infrastructure.Migrations
                     b.HasIndex("SubscribedUserId");
 
                     b.ToTable("Posts", (string)null);
-                });
-
-            modelBuilder.Entity("Smigafestival.Domain.Entities.UsersFaveroitPost", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<bool>("IsFaveroit")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "PostId")
-                        .IsUnique();
-
-                    b.ToTable("UsersFaveroitPost", (string)null);
                 });
 
             modelBuilder.Entity("Smigafestival.Domain.Entities.BackgroundPost", b =>

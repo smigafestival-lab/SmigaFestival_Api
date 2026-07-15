@@ -15,6 +15,8 @@ public sealed class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<BackgroundPost> BackgroundPosts => Set<BackgroundPost>();
+    public DbSet<UsersFaveroitPost> UsersFaveroitPosts => Set<UsersFaveroitPost>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,7 +65,6 @@ public sealed class AppDbContext : DbContext
             entity.Property(post => post.PostName).HasMaxLength(200).IsRequired();
             entity.Property(post => post.ImageUrl).HasMaxLength(2048).IsRequired();
             entity.Property(post => post.SubscribedUserId).HasMaxLength(100);
-            entity.Property(post => post.IsFavorite).HasDefaultValue(false);
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
@@ -87,6 +88,20 @@ public sealed class AppDbContext : DbContext
 
             entity.HasIndex(post => post.CategoryId);
             entity.HasIndex(post => post.PostShowDate);
+        });
+
+        modelBuilder.Entity<UsersFaveroitPost>(entity =>
+        {
+            entity.ToTable("UsersFaveroitPost");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.UserId).IsRequired();
+            entity.Property(x => x.PostId).IsRequired();
+
+            entity.Property(x => x.IsFaveroit).HasDefaultValue(true);
+            entity.Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(x => new { x.UserId, x.PostId }).IsUnique();
         });
     }
 }

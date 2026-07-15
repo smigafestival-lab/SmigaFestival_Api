@@ -34,7 +34,6 @@ public sealed class PostsController : ControllerBase
                 post.UpdatedAt,
                 post.ImageUrl,
                 post.SubscribedUserId,
-                post.IsFavorite,
             })
             .ToListAsync(cancellationToken);
 
@@ -71,7 +70,6 @@ public sealed class PostsController : ControllerBase
                 post.UpdatedAt,
                 post.ImageUrl,
                 post.SubscribedUserId,
-                post.IsFavorite,
             })
             .ToListAsync(cancellationToken);
 
@@ -92,7 +90,6 @@ public sealed class PostsController : ControllerBase
                 item.UpdatedAt,
                 item.ImageUrl,
                 item.SubscribedUserId,
-                item.IsFavorite,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -118,7 +115,6 @@ public sealed class PostsController : ControllerBase
         {
             PostName = request.PostName.Trim(),
             SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId),
-            IsFavorite = request.IsFavorite,
             ImageUrl = imageUrl,
             CreatedAt = now,
             UpdatedAt = now
@@ -150,7 +146,6 @@ public sealed class PostsController : ControllerBase
 
         post.PostName = request.PostName.Trim();
         post.SubscribedUserId = NormalizeSubscribedUserId(request.SubscribedUserId);
-        post.IsFavorite = request.IsFavorite;
         post.UpdatedAt = DateTime.UtcNow;
 
         if (request.File is not null)

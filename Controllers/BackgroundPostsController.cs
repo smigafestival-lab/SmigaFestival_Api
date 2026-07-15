@@ -44,6 +44,10 @@ public sealed class BackgroundPostsController : ControllerBase
         return Ok(posts);
     }
 
+    // NOTE: Favorites-only response is implemented in BackgroundPostFavoritesController.
+
+
+
     [HttpGet("Category/{CategoryId:guid}")]
 
     public async Task<IActionResult> GetByCategoryId(Guid CategoryId,CancellationToken cancellationToken)
