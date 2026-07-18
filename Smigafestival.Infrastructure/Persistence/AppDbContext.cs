@@ -16,6 +16,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<BackgroundPost> BackgroundPosts => Set<BackgroundPost>();
     public DbSet<UsersFaveroitPost> UsersFaveroitPosts => Set<UsersFaveroitPost>();
+    public DbSet<UserRecomandedPost> UserRecomandedPosts => Set<UserRecomandedPost>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -102,6 +103,20 @@ public sealed class AppDbContext : DbContext
             entity.Property(x => x.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
 
             entity.HasIndex(x => new { x.UserId, x.PostId }).IsUnique();
+        });
+
+        modelBuilder.Entity<UserRecomandedPost>(entity =>
+        {
+            entity.ToTable("UserRecomandedPost");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.UserId).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(4000).IsRequired();
+            entity.Property(x => x.PostUrl).HasMaxLength(2048);
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(x => x.UserId);
         });
     }
 }
