@@ -24,6 +24,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var posts = await _dbContext.UserRecomandedPosts
@@ -44,6 +45,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var post = await _dbContext.UserRecomandedPosts
@@ -64,6 +66,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
     }
 
     [HttpGet("user/{userId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetByUserId(Guid userId, CancellationToken cancellationToken)
     {
         var userExists = await _dbContext.Users
@@ -94,6 +97,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
     }
 
     [HttpPost("{userId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create(
         Guid userId,

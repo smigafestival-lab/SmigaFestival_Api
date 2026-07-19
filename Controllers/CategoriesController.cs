@@ -10,6 +10,7 @@ namespace Smigafestival.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+
 public sealed class CategoriesController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
@@ -22,6 +23,7 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var categories = await _dbContext.Categories
@@ -39,6 +41,7 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [HttpGet("{categoryId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid categoryId, CancellationToken cancellationToken)
     {
         var category = await _dbContext.Categories

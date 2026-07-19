@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Smigafestival.Application.Auth.Commands;
+using Smigafestival.Domain.Constants;
 
 namespace Smigafestival.Controllers;
 
@@ -18,6 +19,7 @@ public sealed class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("signup")]
+   
     public async Task<IActionResult> SignUp([FromBody] RegisterUserCommand command, CancellationToken cancellationToken)
     {
         try

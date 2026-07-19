@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smigafestival.Application.Abstractions;
+using Smigafestival.Domain.Constants;
 using Smigafestival.Domain.Entities;
 using Smigafestival.Infrastructure.Persistence;
 
@@ -21,6 +23,7 @@ public sealed class PostsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var posts = await _dbContext.Posts
@@ -41,6 +44,7 @@ public sealed class PostsController : ControllerBase
     }
 
     [HttpGet("by-subscribed-user/{subscribedUserId}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetBySubscribedUserId(string subscribedUserId, CancellationToken cancellationToken)
     {
         var normalizedSubscribedUserId = subscribedUserId.Trim();
@@ -77,6 +81,7 @@ public sealed class PostsController : ControllerBase
     }
 
     [HttpGet("{postId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid postId, CancellationToken cancellationToken)
     {
         var post = await _dbContext.Posts
@@ -97,6 +102,7 @@ public sealed class PostsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = $"{AppRoles.Admin}")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] PostUpsertRequest request, CancellationToken cancellationToken)
     {
@@ -129,6 +135,7 @@ public sealed class PostsController : ControllerBase
     }
 
     [HttpPut("{postId:guid}")]
+    [Authorize(Roles = $"{AppRoles.Admin}")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Update(Guid postId, [FromForm] PostUpsertRequest request, CancellationToken cancellationToken)
     {
@@ -159,6 +166,7 @@ public sealed class PostsController : ControllerBase
     }
 
     [HttpDelete("{postId:guid}")]
+    [Authorize(Roles = $"{AppRoles.Admin}")]
     public async Task<IActionResult> Delete(Guid postId, CancellationToken cancellationToken)
     {
         var post = await _dbContext.Posts.FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);

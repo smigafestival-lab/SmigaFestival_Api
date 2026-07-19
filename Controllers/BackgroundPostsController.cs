@@ -22,6 +22,7 @@ public sealed class BackgroundPostsController : ControllerBase
     }
     
     [HttpGet]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var posts = await _dbContext.BackgroundPosts
@@ -49,6 +50,7 @@ public sealed class BackgroundPostsController : ControllerBase
 
 
     [HttpGet("Category/{CategoryId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
 
     public async Task<IActionResult> GetByCategoryId(Guid CategoryId,CancellationToken cancellationToken)
     {
@@ -71,6 +73,7 @@ public sealed class BackgroundPostsController : ControllerBase
     }
 
     [HttpGet("{postId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid postId, CancellationToken cancellationToken)
     {
         var post = await _dbContext.BackgroundPosts

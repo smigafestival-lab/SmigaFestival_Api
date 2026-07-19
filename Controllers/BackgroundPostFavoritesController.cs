@@ -26,6 +26,7 @@ public sealed class BackgroundPostFavoritesController : ControllerBase
 
     // Returns only PostId + IsFaveroit for a user (join with BackgroundPost).
     [HttpGet("UsersFaveroitpost/{userId:guid}")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> UsersFaveroitpost(Guid userId, CancellationToken cancellationToken)
     {
         var favorites = await _dbContext.UsersFaveroitPosts
@@ -47,6 +48,7 @@ public sealed class BackgroundPostFavoritesController : ControllerBase
 
     // Upsert favorite row for (UserId, PostId)
     [HttpPost]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> Upsert([FromBody] UpsertFavoriteRequest request, CancellationToken cancellationToken)
     {
         var existing = await _dbContext.UsersFaveroitPosts
