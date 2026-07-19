@@ -28,7 +28,7 @@ public class AppUser
 
     public string Role { get; set; } = "User";
 
-    public bool isPlanExpire { get; set; }
+    public bool isPlanExpire { get; set; } = true;
 
     public int PlanID { get; set; }
 

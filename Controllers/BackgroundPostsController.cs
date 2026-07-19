@@ -31,14 +31,11 @@ public sealed class BackgroundPostsController : ControllerBase
         {
             var guestPosts = await _dbContext.GuestUserPosts
                 .AsNoTracking()
-                .Include(post => post.Category)
                 .OrderByDescending(post => post.CreatedAt)
                 .Select(post => new
                 {
                     post.PostId,
                     post.PostName,
-                    post.CategoryId,
-                    CategoryName = post.Category != null ? post.Category.CategoryName : null,
                     post.PostUrl,
                     post.PostShowDate,
                     post.CreatedAt,
@@ -84,14 +81,11 @@ public sealed class BackgroundPostsController : ControllerBase
         {
             var guestPosts = await _dbContext.GuestUserPosts
                 .AsNoTracking()
-                .Where(item => item.CategoryId == CategoryId)
+                .OrderByDescending(item => item.CreatedAt)
                 .Select(item => new
                 {
                     item.PostId,
                     item.PostName,
-                    item.CategoryId,
-                    // Property mapping exists in entity; avoid Include/Category navigation to prevent compile-time generic projection issues.
-                    CategoryName = item.CategoryId == null ? null : (string?)null,
                     item.PostUrl,
                     item.PostShowDate,
                     item.CreatedAt,
@@ -131,14 +125,11 @@ public sealed class BackgroundPostsController : ControllerBase
         {
             var guestPost = await _dbContext.GuestUserPosts
                 .AsNoTracking()
-                .Include(item => item.Category)
                 .Where(item => item.PostId == postId)
                 .Select(item => new
                 {
                     item.PostId,
                     item.PostName,
-                    item.CategoryId,
-                    CategoryName = item.Category != null ? item.Category.CategoryName : null,
                     item.PostUrl,
                     item.PostShowDate,
                     item.CreatedAt,

@@ -107,14 +107,6 @@ public sealed class AppDbContext : DbContext
             entity.Property(post => post.PostUrl).HasMaxLength(2048).IsRequired();
             entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
-
-            entity.HasOne(post => post.Category)
-                .WithMany()
-                .HasForeignKey(post => post.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .IsRequired(false);
-
-            entity.HasIndex(post => post.CategoryId);
             entity.HasIndex(post => post.PostShowDate);
         });
 

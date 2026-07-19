@@ -198,9 +198,6 @@ namespace Smigafestival.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -225,8 +222,6 @@ namespace Smigafestival.Infrastructure.Migrations
                         .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("PostId");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("PostShowDate");
 
@@ -360,16 +355,6 @@ namespace Smigafestival.Infrastructure.Migrations
                 {
                     b.HasOne("Smigafestival.Domain.Entities.Category", "Category")
                         .WithMany("BackgroundPosts")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("Smigafestival.Domain.Entities.GuestUserPost", b =>
-                {
-                    b.HasOne("Smigafestival.Domain.Entities.Category", "Category")
-                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
 

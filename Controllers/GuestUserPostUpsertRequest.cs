@@ -1,16 +1,12 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Smigafestival.Controllers;
 
-public sealed class BackgroundPostUpsertRequest
+public sealed class GuestUserPostUpsertRequest
 {
     [FromForm(Name = "postName")]
     public string? PostName { get; set; }
-
-    [FromForm(Name = "categoryId")]
-    public Guid CategoryId { get; set; }
 
     [FromForm(Name = "file")]
     public IFormFile? File { get; set; }
