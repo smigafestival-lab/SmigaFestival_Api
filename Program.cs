@@ -8,8 +8,10 @@ using Smigafestival.Application.Common.Models;
 using Smigafestival.Infrastructure;
 using Smigafestival.Infrastructure.Persistence;
 using System.Text;
+using Smigafestival.BackgroundJobs;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddControllers();
 builder.Services.AddApplication();
@@ -82,6 +84,7 @@ builder.Services.AddCors(Options =>
     });
 });
 
+builder.Services.AddPlanExpiryQuartz(builder.Configuration);
 
 
 var app = builder.Build();
