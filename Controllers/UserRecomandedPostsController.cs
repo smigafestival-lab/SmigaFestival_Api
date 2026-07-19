@@ -38,6 +38,21 @@ public sealed class UserRecomandedPostsController : ControllerBase
                 item.PostUrl,
                 item.CreatedAt,
                 item.UpdatedAt,
+
+                FirstName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.FirstName)
+                    .FirstOrDefault(),
+
+                LastName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.LastName)
+                    .FirstOrDefault(),
+
+                BusinessName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.BusinessName)
+                    .FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 
@@ -59,10 +74,27 @@ public sealed class UserRecomandedPostsController : ControllerBase
                 item.PostUrl,
                 item.CreatedAt,
                 item.UpdatedAt,
+
+                FirstName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.FirstName)
+                    .FirstOrDefault(),
+
+                LastName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.LastName)
+                    .FirstOrDefault(),
+
+                BusinessName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.BusinessName)
+                    .FirstOrDefault(),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return post is null ? NotFound(new { message = "Recommended post not found." }) : Ok(post);
+        return post is null
+            ? NotFound(new { message = "Recommended post not found." })
+            : Ok(post);
     }
 
     [HttpGet("user/{userId:guid}")]
@@ -90,6 +122,21 @@ public sealed class UserRecomandedPostsController : ControllerBase
                 item.PostUrl,
                 item.CreatedAt,
                 item.UpdatedAt,
+
+                FirstName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.FirstName)
+                    .FirstOrDefault(),
+
+                LastName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.LastName)
+                    .FirstOrDefault(),
+
+                BusinessName = _dbContext.Users
+                    .Where(u => u.Id == item.UserId)
+                    .Select(u => u.BusinessName)
+                    .FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 
@@ -251,3 +298,4 @@ public sealed class UserRecomandedPostsController : ControllerBase
         return result.sasUri.ToString();
     }
 }
+
