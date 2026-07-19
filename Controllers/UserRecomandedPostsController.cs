@@ -27,6 +27,11 @@ public sealed class UserRecomandedPostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var posts = await _dbContext.UserRecomandedPosts
             .AsNoTracking()
             .OrderByDescending(item => item.CreatedAt)
@@ -63,6 +68,11 @@ public sealed class UserRecomandedPostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var post = await _dbContext.UserRecomandedPosts
             .AsNoTracking()
             .Where(item => item.Id == id)
@@ -101,6 +111,11 @@ public sealed class UserRecomandedPostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetByUserId(Guid userId, CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var userExists = await _dbContext.Users
             .AsNoTracking()
             .AnyAsync(user => user.Id == userId, cancellationToken);
@@ -298,4 +313,3 @@ public sealed class UserRecomandedPostsController : ControllerBase
         return result.sasUri.ToString();
     }
 }
-

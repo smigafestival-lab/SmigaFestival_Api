@@ -29,6 +29,11 @@ public sealed class BackgroundPostFavoritesController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> UsersFaveroitpost(Guid userId, CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var favorites = await _dbContext.UsersFaveroitPosts
             .AsNoTracking()
             .Where(f => f.UserId == userId && f.IsFaveroit)

@@ -26,6 +26,11 @@ public sealed class PostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var posts = await _dbContext.Posts
             .AsNoTracking()
             .OrderByDescending(post => post.CreatedAt)
@@ -47,6 +52,11 @@ public sealed class PostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetBySubscribedUserId(string subscribedUserId, CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var normalizedSubscribedUserId = subscribedUserId.Trim();
         if (string.IsNullOrWhiteSpace(normalizedSubscribedUserId))
         {
@@ -84,6 +94,11 @@ public sealed class PostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid postId, CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var post = await _dbContext.Posts
             .AsNoTracking()
             .Where(item => item.PostId == postId)

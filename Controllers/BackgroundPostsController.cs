@@ -25,7 +25,31 @@ public sealed class BackgroundPostsController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var posts = await _dbContext.BackgroundPosts
+        var useGuestPosts = await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken);
+
+        if (useGuestPosts)
+        {
+            var guestPosts = await _dbContext.GuestUserPosts
+                .AsNoTracking()
+                .Include(post => post.Category)
+                .OrderByDescending(post => post.CreatedAt)
+                .Select(post => new
+                {
+                    post.PostId,
+                    post.PostName,
+                    post.CategoryId,
+                    CategoryName = post.Category != null ? post.Category.CategoryName : null,
+                    post.PostUrl,
+                    post.PostShowDate,
+                    post.CreatedAt,
+                    post.UpdatedAt,
+                })
+                .ToListAsync(cancellationToken);
+
+            return Ok(guestPosts);
+        }
+
+        var backgroundPosts = await _dbContext.BackgroundPosts
             .AsNoTracking()
             .Include(post => post.Category)
             .OrderByDescending(post => post.CreatedAt)
@@ -42,7 +66,7 @@ public sealed class BackgroundPostsController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(backgroundPosts);
     }
 
     // NOTE: Favorites-only response is implemented in BackgroundPostFavoritesController.
@@ -54,7 +78,31 @@ public sealed class BackgroundPostsController : ControllerBase
 
     public async Task<IActionResult> GetByCategoryId(Guid CategoryId,CancellationToken cancellationToken)
     {
-        var post = await _dbContext.BackgroundPosts
+        var useGuestPosts = await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken);
+
+        if (useGuestPosts)
+        {
+            var guestPosts = await _dbContext.GuestUserPosts
+                .AsNoTracking()
+                .Where(item => item.CategoryId == CategoryId)
+                .Select(item => new
+                {
+                    item.PostId,
+                    item.PostName,
+                    item.CategoryId,
+                    // Property mapping exists in entity; avoid Include/Category navigation to prevent compile-time generic projection issues.
+                    CategoryName = item.CategoryId == null ? null : (string?)null,
+                    item.PostUrl,
+                    item.PostShowDate,
+                    item.CreatedAt,
+                    item.UpdatedAt,
+                })
+                .ToListAsync(cancellationToken);
+
+            return guestPosts.Count == 0 ? NotFound() : Ok(guestPosts);
+        }
+
+        var backgroundPosts = await _dbContext.BackgroundPosts
             .AsNoTracking()
             .Where(item => item.CategoryId == CategoryId)
             .Select(item => new
@@ -62,21 +110,46 @@ public sealed class BackgroundPostsController : ControllerBase
                 item.PostId,
                 item.PostName,
                 item.CategoryId,
-                CategoryName = item.Category != null ? item.Category.CategoryName : null,
+                CategoryName = item.CategoryId == null ? null : (string?)null,
                 item.PostUrl,
                 item.PostShowDate,
                 item.CreatedAt,
                 item.UpdatedAt,
-            }).ToListAsync(cancellationToken);
+            })
+            .ToListAsync(cancellationToken);
 
-        return post is null ? NotFound() : Ok(post);
+        return backgroundPosts.Count == 0 ? NotFound() : Ok(backgroundPosts);
     }
 
     [HttpGet("{postId:guid}")]
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid postId, CancellationToken cancellationToken)
     {
-        var post = await _dbContext.BackgroundPosts
+        var useGuestPosts = await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken);
+
+        if (useGuestPosts)
+        {
+            var guestPost = await _dbContext.GuestUserPosts
+                .AsNoTracking()
+                .Include(item => item.Category)
+                .Where(item => item.PostId == postId)
+                .Select(item => new
+                {
+                    item.PostId,
+                    item.PostName,
+                    item.CategoryId,
+                    CategoryName = item.Category != null ? item.Category.CategoryName : null,
+                    item.PostUrl,
+                    item.PostShowDate,
+                    item.CreatedAt,
+                    item.UpdatedAt,
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return guestPost is null ? NotFound() : Ok(guestPost);
+        }
+
+        var backgroundPost = await _dbContext.BackgroundPosts
             .AsNoTracking()
             .Include(item => item.Category)
             .Where(item => item.PostId == postId)
@@ -93,7 +166,7 @@ public sealed class BackgroundPostsController : ControllerBase
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return post is null ? NotFound() : Ok(post);
+        return backgroundPost is null ? NotFound() : Ok(backgroundPost);
     }
 
     [HttpPost]
