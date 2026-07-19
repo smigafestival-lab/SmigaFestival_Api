@@ -15,6 +15,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<BackgroundPost> BackgroundPosts => Set<BackgroundPost>();
+    public DbSet<GuestUserPost> GuestUserPosts => Set<GuestUserPost>();
     public DbSet<UsersFaveroitPost> UsersFaveroitPosts => Set<UsersFaveroitPost>();
     public DbSet<UserRecomandedPost> UserRecomandedPosts => Set<UserRecomandedPost>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
@@ -90,6 +91,25 @@ public sealed class AppDbContext : DbContext
 
             entity.HasOne(post => post.Category)
                 .WithMany(category => category.BackgroundPosts)
+                .HasForeignKey(post => post.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            entity.HasIndex(post => post.CategoryId);
+            entity.HasIndex(post => post.PostShowDate);
+        });
+
+        modelBuilder.Entity<GuestUserPost>(entity =>
+        {
+            entity.ToTable("GuestUserPost");
+            entity.HasKey(post => post.PostId);
+            entity.Property(post => post.PostName).HasMaxLength(200).IsRequired();
+            entity.Property(post => post.PostUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(post => post.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(post => post.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(post => post.Category)
+                .WithMany()
                 .HasForeignKey(post => post.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);

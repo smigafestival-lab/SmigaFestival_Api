@@ -26,6 +26,11 @@ public sealed class CategoriesController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var categories = await _dbContext.Categories
             .AsNoTracking()
             .OrderBy(category => category.CategoryName)
@@ -44,6 +49,11 @@ public sealed class CategoriesController : ControllerBase
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> GetById(Guid categoryId, CancellationToken cancellationToken)
     {
+        if (await this.IsCurrentUserExpiredAsync(_dbContext, cancellationToken))
+        {
+            return this.ExpiredUserEmptyResult();
+        }
+
         var category = await _dbContext.Categories
             .AsNoTracking()
             .Where(item => item.CategoryId == categoryId)
