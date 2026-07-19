@@ -78,22 +78,6 @@ public sealed class UsersController : ControllerBase
         });
     }
 
-    [HttpDelete("{userId:guid}/subscribed-user-id")]
-    [Authorize(Roles = AppRoles.Admin)]
-    public async Task<IActionResult> DeleteSubscribedUserId(Guid userId, CancellationToken cancellationToken)
-    {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
-        if (user is null)
-        {
-            return NotFound(new { message = "User not found." });
-        }
-
-        user.SubscribedUserId = null;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return NoContent();
-    }
-
     [HttpPost("{userId:guid}/plan")]
     [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> AssignPlan(
