@@ -28,5 +28,13 @@ public class AppUser
 
     public string Role { get; set; } = "User";
 
+    public bool isPlanExpire { get; set; }
+
+    public int PlanID { get; set; }
+
+    public DateTime? PlanStartDate { get; set; }
+
+    public DateTime? PlanEndDate { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

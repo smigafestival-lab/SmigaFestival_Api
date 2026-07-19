@@ -47,6 +47,10 @@ public sealed class UsersController : ControllerBase
                 user.IsPaymentDone,
                 user.CreatedAtUtc,
                 user.BusinessName,
+                user.isPlanExpire,
+                PlanId = user.PlanID,
+                user.PlanStartDate,
+                user.PlanEndDate,
                 
             })
             .ToListAsync(cancellationToken);
@@ -90,7 +94,74 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{userId:guid}/plan")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
+    public async Task<IActionResult> AssignPlan(
+        Guid userId,
+        [FromBody] AssignUserPlanRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        var planExists = await _dbContext.SubscriptionPlans
+            .AsNoTracking()
+            .AnyAsync(item => item.PlanId == request.PlanId, cancellationToken);
+
+        if (!planExists)
+        {
+            return NotFound(new { message = "Subscription plan not found." });
+        }
+
+        user.PlanID = request.PlanId;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            user.Id,
+            PlanId = user.PlanID
+        });
+    }
+
+    [HttpPost("{userId:guid}/plan-dates")]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> UpdatePlanDates(
+        Guid userId,
+        [FromBody] UpdateUserPlanDatesRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.PlanEndDate < request.PlanStartDate)
+        {
+            return BadRequest(new { message = "PlanEndDate must be greater than or equal to PlanStartDate." });
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        user.PlanStartDate = request.PlanStartDate;
+        user.PlanEndDate = request.PlanEndDate;
+        user.isPlanExpire = request.PlanEndDate.Date < DateTime.UtcNow.Date;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            user.Id,
+            PlanId = user.PlanID,
+            user.PlanStartDate,
+            user.PlanEndDate,
+            user.isPlanExpire
+        });
+    }
+
     [HttpPost("deserialize-token")]
+    [Authorize(Roles = $"{AppRoles.User},{AppRoles.Admin}")]
     public async Task<IActionResult> DeserializeToken(
         [FromBody] DeserializeTokenRequest request,
         CancellationToken cancellationToken)
@@ -138,6 +209,10 @@ public sealed class UsersController : ControllerBase
                 item.IsPaymentDone,
                 item.CreatedAtUtc,
                 item.BusinessName,
+                item.isPlanExpire,
+                PlanId = item.PlanID,
+                item.PlanStartDate,
+                item.PlanEndDate,
             })
             .FirstOrDefaultAsync(cancellationToken);
 

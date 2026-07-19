@@ -17,6 +17,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<BackgroundPost> BackgroundPosts => Set<BackgroundPost>();
     public DbSet<UsersFaveroitPost> UsersFaveroitPosts => Set<UsersFaveroitPost>();
     public DbSet<UserRecomandedPost> UserRecomandedPosts => Set<UserRecomandedPost>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +43,12 @@ public sealed class AppDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(AppRoles.User);
             entity.Property(user => user.CreatedAtUtc).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.Property(user => user.isPlanExpire).HasDefaultValue(false);
+            entity.Property(user => user.PlanID).HasDefaultValue(0);
+            entity.Property(user => user.PlanStartDate);
+            entity.Property(user => user.PlanEndDate);
+
             entity.Property(user => user.Address).HasMaxLength(500).IsRequired();
             entity.Property(user => user.Website).HasMaxLength(200);
             entity.HasIndex(user => user.NormalizedEmail).IsUnique();
@@ -117,6 +124,17 @@ public sealed class AppDbContext : DbContext
             entity.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
             entity.HasIndex(x => x.UserId);
+        });
+
+        modelBuilder.Entity<SubscriptionPlan>(entity =>
+        {
+            entity.ToTable("SubscriptionPlan");
+            entity.HasKey(x => x.PlanId);
+
+            entity.Property(x => x.PlanId).ValueGeneratedNever();
+            entity.Property(x => x.PlanAmount).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.PlanDuration).IsRequired();
+            entity.Property(x => x.PlanCategory).HasMaxLength(50).IsRequired();
         });
     }
 }
