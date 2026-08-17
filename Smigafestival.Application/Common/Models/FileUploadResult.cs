@@ -5,4 +5,5 @@ public sealed record FileUploadResult(
     string FileName,
     string ContentType,
     long Size,
+    Uri BlobUri,
     Uri sasUri);

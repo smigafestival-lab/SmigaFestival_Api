@@ -34,18 +34,9 @@ public sealed class PostsController : ControllerBase
         var posts = await _dbContext.Posts
             .AsNoTracking()
             .OrderByDescending(post => post.CreatedAt)
-            .Select(post => new
-            {
-                post.PostId,
-                post.PostName,
-                post.CreatedAt,
-                post.UpdatedAt,
-                post.ImageUrl,
-                post.SubscribedUserId,
-            })
             .ToListAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapPostResponse));
     }
 
     [HttpGet("by-subscribed-user/{subscribedUserId}")]
@@ -76,18 +67,9 @@ public sealed class PostsController : ControllerBase
             .AsNoTracking()
             .Where(post => post.SubscribedUserId == normalizedSubscribedUserId)
             .OrderByDescending(post => post.CreatedAt)
-            .Select(post => new
-            {
-                post.PostId,
-                post.PostName,
-                post.CreatedAt,
-                post.UpdatedAt,
-                post.ImageUrl,
-                post.SubscribedUserId,
-            })
             .ToListAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapPostResponse));
     }
 
     [HttpGet("{postId:guid}")]
@@ -101,19 +83,9 @@ public sealed class PostsController : ControllerBase
 
         var post = await _dbContext.Posts
             .AsNoTracking()
-            .Where(item => item.PostId == postId)
-            .Select(item => new
-            {
-                item.PostId,
-                item.PostName,
-                item.CreatedAt,
-                item.UpdatedAt,
-                item.ImageUrl,
-                item.SubscribedUserId,
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
 
-        return post is null ? NotFound() : Ok(post);
+        return post is null ? NotFound() : Ok(MapPostResponse(post));
     }
 
     [HttpPost]
@@ -146,7 +118,7 @@ public sealed class PostsController : ControllerBase
         await _dbContext.Posts.AddAsync(post, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { postId = post.PostId }, post);
+        return CreatedAtAction(nameof(GetById), new { postId = post.PostId }, MapPostResponse(post));
     }
 
     [HttpPut("{postId:guid}")]
@@ -177,7 +149,7 @@ public sealed class PostsController : ControllerBase
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(post);
+        return Ok(MapPostResponse(post));
     }
 
     [HttpDelete("{postId:guid}")]
@@ -240,11 +212,29 @@ public sealed class PostsController : ControllerBase
             request.File.ContentType,
             cancellationToken);
 
-        return result.sasUri.ToString();
+        return result.BlobUri.ToString();
     }
 
     private static string? NormalizeSubscribedUserId(string? subscribedUserId)
     {
         return string.IsNullOrWhiteSpace(subscribedUserId) ? null : subscribedUserId.Trim();
+    }
+
+    private object MapPostResponse(Post post)
+    {
+        return new
+        {
+            post.PostId,
+            post.PostName,
+            post.CreatedAt,
+            post.UpdatedAt,
+            ImageUrl = AddSasToken(post.ImageUrl),
+            post.SubscribedUserId,
+        };
+    }
+
+    private string AddSasToken(string blobUrl)
+    {
+        return _blobStorageService.GetBlobSasUriForUrl(blobUrl, _blobStorageService.DefaultSasExpiry).ToString();
     }
 }

@@ -34,15 +34,9 @@ public sealed class CategoriesController : ControllerBase
         var categories = await _dbContext.Categories
             .AsNoTracking()
             .OrderBy(category => category.CategoryName)
-            .Select(category => new
-            {
-                category.CategoryId,
-                category.CategoryName,
-                category.ImageUrl,
-            })
             .ToListAsync(cancellationToken);
 
-        return Ok(categories);
+        return Ok(categories.Select(MapCategoryResponse));
     }
 
     [HttpGet("{categoryId:guid}")]
@@ -56,16 +50,9 @@ public sealed class CategoriesController : ControllerBase
 
         var category = await _dbContext.Categories
             .AsNoTracking()
-            .Where(item => item.CategoryId == categoryId)
-            .Select(item => new
-            {
-                item.CategoryId,
-                item.CategoryName,
-                item.ImageUrl,
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(item => item.CategoryId == categoryId, cancellationToken);
 
-        return category is null ? NotFound() : Ok(category);
+        return category is null ? NotFound() : Ok(MapCategoryResponse(category));
     }
 
     [HttpPost]
@@ -102,7 +89,7 @@ public sealed class CategoriesController : ControllerBase
         await _dbContext.Categories.AddAsync(category, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { categoryId = category.CategoryId }, category);
+        return CreatedAtAction(nameof(GetById), new { categoryId = category.CategoryId }, MapCategoryResponse(category));
     }
 
     [HttpPut("{categoryId:guid}")]
@@ -143,7 +130,7 @@ public sealed class CategoriesController : ControllerBase
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(category);
+        return Ok(MapCategoryResponse(category));
     }
 
     [HttpDelete("{categoryId:guid}")]
@@ -177,6 +164,21 @@ public sealed class CategoriesController : ControllerBase
             file.ContentType,
             cancellationToken);
 
-        return result.sasUri.ToString();
+        return result.BlobUri.ToString();
+    }
+
+    private object MapCategoryResponse(Category category)
+    {
+        return new
+        {
+            category.CategoryId,
+            category.CategoryName,
+            ImageUrl = AddSasToken(category.ImageUrl),
+        };
+    }
+
+    private string AddSasToken(string blobUrl)
+    {
+        return _blobStorageService.GetBlobSasUriForUrl(blobUrl, _blobStorageService.DefaultSasExpiry).ToString();
     }
 }

@@ -32,38 +32,18 @@ public sealed class BackgroundPostsController : ControllerBase
             var guestPosts = await _dbContext.GuestUserPosts
                 .AsNoTracking()
                 .OrderByDescending(post => post.CreatedAt)
-                .Select(post => new
-                {
-                    post.PostId,
-                    post.PostName,
-                    post.PostUrl,
-                    post.PostShowDate,
-                    post.CreatedAt,
-                    post.UpdatedAt,
-                })
                 .ToListAsync(cancellationToken);
 
-            return Ok(guestPosts);
+            return Ok(guestPosts.Select(MapGuestPostResponse));
         }
 
         var backgroundPosts = await _dbContext.BackgroundPosts
             .AsNoTracking()
             .Include(post => post.Category)
             .OrderByDescending(post => post.CreatedAt)
-            .Select(post => new
-            {
-                post.PostId,
-                post.PostName,
-                post.CategoryId,
-                CategoryName = post.Category != null ? post.Category.CategoryName : null,
-                post.PostUrl,
-                post.PostShowDate,
-                post.CreatedAt,
-                post.UpdatedAt,
-            })
             .ToListAsync(cancellationToken);
 
-        return Ok(backgroundPosts);
+        return Ok(backgroundPosts.Select(MapBackgroundPostResponse));
     }
 
     // NOTE: Favorites-only response is implemented in BackgroundPostFavoritesController.
@@ -82,37 +62,18 @@ public sealed class BackgroundPostsController : ControllerBase
             var guestPosts = await _dbContext.GuestUserPosts
                 .AsNoTracking()
                 .OrderByDescending(item => item.CreatedAt)
-                .Select(item => new
-                {
-                    item.PostId,
-                    item.PostName,
-                    item.PostUrl,
-                    item.PostShowDate,
-                    item.CreatedAt,
-                    item.UpdatedAt,
-                })
                 .ToListAsync(cancellationToken);
 
-            return guestPosts.Count == 0 ? NotFound() : Ok(guestPosts);
+            return guestPosts.Count == 0 ? NotFound() : Ok(guestPosts.Select(MapGuestPostResponse));
         }
 
         var backgroundPosts = await _dbContext.BackgroundPosts
             .AsNoTracking()
+            .Include(item => item.Category)
             .Where(item => item.CategoryId == CategoryId)
-            .Select(item => new
-            {
-                item.PostId,
-                item.PostName,
-                item.CategoryId,
-                CategoryName = item.CategoryId == null ? null : (string?)null,
-                item.PostUrl,
-                item.PostShowDate,
-                item.CreatedAt,
-                item.UpdatedAt,
-            })
             .ToListAsync(cancellationToken);
 
-        return backgroundPosts.Count == 0 ? NotFound() : Ok(backgroundPosts);
+        return backgroundPosts.Count == 0 ? NotFound() : Ok(backgroundPosts.Select(MapBackgroundPostResponse));
     }
 
     [HttpGet("{postId:guid}")]
@@ -125,39 +86,17 @@ public sealed class BackgroundPostsController : ControllerBase
         {
             var guestPost = await _dbContext.GuestUserPosts
                 .AsNoTracking()
-                .Where(item => item.PostId == postId)
-                .Select(item => new
-                {
-                    item.PostId,
-                    item.PostName,
-                    item.PostUrl,
-                    item.PostShowDate,
-                    item.CreatedAt,
-                    item.UpdatedAt,
-                })
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
 
-            return guestPost is null ? NotFound() : Ok(guestPost);
+            return guestPost is null ? NotFound() : Ok(MapGuestPostResponse(guestPost));
         }
 
         var backgroundPost = await _dbContext.BackgroundPosts
             .AsNoTracking()
             .Include(item => item.Category)
-            .Where(item => item.PostId == postId)
-            .Select(item => new
-            {
-                item.PostId,
-                item.PostName,
-                item.CategoryId,
-                CategoryName = item.Category != null ? item.Category.CategoryName : null,
-                item.PostUrl,
-                item.PostShowDate,
-                item.CreatedAt,
-                item.UpdatedAt,
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(item => item.PostId == postId, cancellationToken);
 
-        return backgroundPost is null ? NotFound() : Ok(backgroundPost);
+        return backgroundPost is null ? NotFound() : Ok(MapBackgroundPostResponse(backgroundPost));
     }
 
     [HttpPost]
@@ -193,7 +132,7 @@ public sealed class BackgroundPostsController : ControllerBase
         await _dbContext.BackgroundPosts.AddRangeAsync(posts, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapBackgroundPostResponse));
     }
 
     [HttpPut("{postId:guid}")]
@@ -225,7 +164,7 @@ public sealed class BackgroundPostsController : ControllerBase
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(post);
+        return Ok(MapBackgroundPostResponse(post));
     }
 
     [HttpDelete("{postId:guid}")]
@@ -290,7 +229,7 @@ public sealed class BackgroundPostsController : ControllerBase
             file.ContentType,
             cancellationToken);
 
-        return result.sasUri.ToString();
+        return result.BlobUri.ToString();
     }
 
     private static List<IFormFile> GetFiles(BackgroundPostUpsertRequest request)
@@ -312,5 +251,38 @@ public sealed class BackgroundPostsController : ControllerBase
     private static string ResolveSinglePostName(BackgroundPostUpsertRequest request)
     {
         return request.PostName!.Trim();
+    }
+
+    private object MapBackgroundPostResponse(BackgroundPost post)
+    {
+        return new
+        {
+            post.PostId,
+            post.PostName,
+            post.CategoryId,
+            CategoryName = post.Category?.CategoryName,
+            PostUrl = AddSasToken(post.PostUrl),
+            post.PostShowDate,
+            post.CreatedAt,
+            post.UpdatedAt,
+        };
+    }
+
+    private object MapGuestPostResponse(GuestUserPost post)
+    {
+        return new
+        {
+            post.PostId,
+            post.PostName,
+            PostUrl = AddSasToken(post.PostUrl),
+            post.PostShowDate,
+            post.CreatedAt,
+            post.UpdatedAt,
+        };
+    }
+
+    private string AddSasToken(string blobUrl)
+    {
+        return _blobStorageService.GetBlobSasUriForUrl(blobUrl, _blobStorageService.DefaultSasExpiry).ToString();
     }
 }

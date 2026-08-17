@@ -61,7 +61,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapRecommendedPostResponse));
     }
 
     [HttpGet("{id:guid}")]
@@ -104,7 +104,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
 
         return post is null
             ? NotFound(new { message = "Recommended post not found." })
-            : Ok(post);
+            : Ok(MapRecommendedPostResponse(post));
     }
 
     [HttpGet("user/{userId:guid}")]
@@ -155,7 +155,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapRecommendedPostResponse));
     }
 
     [HttpPost("{userId:guid}")]
@@ -186,7 +186,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
         await _dbContext.UserRecomandedPosts.AddAsync(post, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { id = post.Id }, post);
+        return CreatedAtAction(nameof(GetById), new { id = post.Id }, MapCreatedRecommendedPostResponse(post));
     }
 
     [HttpPut("{id:guid}")]
@@ -222,7 +222,7 @@ public sealed class UserRecomandedPostsController : ControllerBase
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(post);
+        return Ok(MapCreatedRecommendedPostResponse(post));
     }
 
     [HttpDelete("{id:guid}")]
@@ -310,6 +310,42 @@ public sealed class UserRecomandedPostsController : ControllerBase
             file.ContentType,
             cancellationToken);
 
-        return result.sasUri.ToString();
+        return result.BlobUri.ToString();
+    }
+
+    private object MapCreatedRecommendedPostResponse(UserRecomandedPost post)
+    {
+        return new
+        {
+            post.Id,
+            post.UserId,
+            post.Description,
+            PostUrl = AddSasTokenIfPresent(post.PostUrl),
+            post.CreatedAt,
+            post.UpdatedAt,
+        };
+    }
+
+    private object MapRecommendedPostResponse(dynamic post)
+    {
+        return new
+        {
+            post.Id,
+            post.UserId,
+            post.Description,
+            PostUrl = AddSasTokenIfPresent(post.PostUrl),
+            post.CreatedAt,
+            post.UpdatedAt,
+            post.FirstName,
+            post.LastName,
+            post.BusinessName,
+        };
+    }
+
+    private string? AddSasTokenIfPresent(string? blobUrl)
+    {
+        return string.IsNullOrWhiteSpace(blobUrl)
+            ? blobUrl
+            : _blobStorageService.GetBlobSasUriForUrl(blobUrl, _blobStorageService.DefaultSasExpiry).ToString();
     }
 }

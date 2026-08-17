@@ -10,6 +10,7 @@ namespace Smigafestival.Infrastructure.Services;
 public sealed class AzureBlobStorageService : IBlobStorageService
 {
     private readonly BlobContainerClient _containerClient;
+    public TimeSpan DefaultSasExpiry => TimeSpan.FromHours(1);
 
     public AzureBlobStorageService(BlobStorageOptions options)
     {
@@ -52,34 +53,61 @@ public sealed class AzureBlobStorageService : IBlobStorageService
         await blobClient.UploadAsync(content, uploadOptions, cancellationToken);
 
         var size = content.CanSeek ? content.Length : 0;
-        var sasUri = GetBlobSasUri(blobName, TimeSpan.FromHours(1));
+        var sasUri = GetBlobSasUri(blobName, DefaultSasExpiry);
         return new FileUploadResult(
             blobName,
             safeFileName,
             uploadOptions.HttpHeaders.ContentType,
             size,
+            blobClient.Uri,
             sasUri
             );
     }
 
-
-public Uri GetBlobSasUri(string blobName, TimeSpan expiry)
-{
-    BlobClient blobClient = _containerClient.GetBlobClient(blobName);
-
-    BlobSasBuilder sasBuilder = new BlobSasBuilder
+    public Uri GetBlobSasUri(string blobName, TimeSpan expiry)
     {
-        BlobContainerName = _containerClient.Name,
-        BlobName = blobName,
-        Resource = "b",
-        ExpiresOn = DateTimeOffset.UtcNow.Add(expiry)
-    };
+        BlobClient blobClient = _containerClient.GetBlobClient(blobName);
 
-    sasBuilder.SetPermissions(BlobSasPermissions.Read);
+        BlobSasBuilder sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = _containerClient.Name,
+            BlobName = blobName,
+            Resource = "b",
+            ExpiresOn = DateTimeOffset.UtcNow.Add(expiry)
+        };
 
-    Uri sasUri = blobClient.GenerateSasUri(sasBuilder);
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-    return sasUri;
-}
+        Uri sasUri = blobClient.GenerateSasUri(sasBuilder);
 
+        return sasUri;
+    }
+
+    public Uri GetBlobSasUriForUrl(string blobUrl, TimeSpan expiry)
+    {
+        var blobName = ExtractBlobName(blobUrl);
+        return GetBlobSasUri(blobName, expiry);
+    }
+
+    private static string ExtractBlobName(string blobUrl)
+    {
+        if (string.IsNullOrWhiteSpace(blobUrl))
+        {
+            throw new ArgumentException("Blob URL is required.", nameof(blobUrl));
+        }
+
+        if (!Uri.TryCreate(blobUrl, UriKind.Absolute, out var uri))
+        {
+            return blobUrl.Trim();
+        }
+
+        var path = uri.AbsolutePath.Trim('/');
+        var slashIndex = path.IndexOf('/');
+        if (slashIndex < 0 || slashIndex == path.Length - 1)
+        {
+            throw new ArgumentException("Blob URL does not contain a valid blob name.", nameof(blobUrl));
+        }
+
+        return Uri.UnescapeDataString(path[(slashIndex + 1)..]);
+    }
 }

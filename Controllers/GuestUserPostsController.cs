@@ -28,18 +28,9 @@ public sealed class GuestUserPostsController : ControllerBase
         var posts = await _dbContext.GuestUserPosts
             .AsNoTracking()
             .OrderByDescending(post => post.CreatedAt)
-            .Select(post => new
-            {
-                post.PostId,
-                post.PostName,
-                post.PostUrl,
-                post.PostShowDate,
-                post.CreatedAt,
-                post.UpdatedAt,
-            })
             .ToListAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapGuestPostResponse));
     }
 
     [HttpPost]
@@ -74,7 +65,7 @@ public sealed class GuestUserPostsController : ControllerBase
         await _dbContext.GuestUserPosts.AddRangeAsync(posts, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return Ok(posts);
+        return Ok(posts.Select(MapGuestPostResponse));
     }
 
     private async Task<string?> ValidateRequestAsync(
@@ -115,7 +106,7 @@ public sealed class GuestUserPostsController : ControllerBase
             file.ContentType,
             cancellationToken);
 
-        return result.sasUri.ToString();
+        return result.BlobUri.ToString();
     }
 
     private static List<IFormFile> GetFiles(GuestUserPostUpsertRequest request)
@@ -132,6 +123,24 @@ public sealed class GuestUserPostsController : ControllerBase
         }
 
         return files;
+    }
+
+    private object MapGuestPostResponse(GuestUserPost post)
+    {
+        return new
+        {
+            post.PostId,
+            post.PostName,
+            PostUrl = AddSasToken(post.PostUrl),
+            post.PostShowDate,
+            post.CreatedAt,
+            post.UpdatedAt,
+        };
+    }
+
+    private string AddSasToken(string blobUrl)
+    {
+        return _blobStorageService.GetBlobSasUriForUrl(blobUrl, _blobStorageService.DefaultSasExpiry).ToString();
     }
 }
 
