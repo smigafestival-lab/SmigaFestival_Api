@@ -6,7 +6,7 @@ public sealed class GuestUserPost
 
     public string PostName { get; set; } = string.Empty;
 
-    public DateTime PostShowDate { get; set; }
+    public DateTime? PostShowDate { get; set; }
 
     public string PostUrl { get; set; } = string.Empty;
 

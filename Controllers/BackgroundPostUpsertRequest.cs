@@ -19,5 +19,5 @@ public sealed class BackgroundPostUpsertRequest
     public List<IFormFile>? Files { get; set; }
 
     [FromForm(Name = "postShowDate")]
-    public DateTime PostShowDate { get; set; }
+    public DateTime? PostShowDate { get; set; }
 }

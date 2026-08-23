@@ -68,6 +68,26 @@ public sealed class GuestUserPostsController : ControllerBase
         return Ok(posts.Select(MapGuestPostResponse));
     }
 
+    [HttpDelete("{guestuserpostid:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> Delete(Guid guestuserpostid, CancellationToken cancellationToken)
+    {
+        var post = await _dbContext.GuestUserPosts.FirstOrDefaultAsync(x => x.PostId == guestuserpostid,cancellationToken);
+
+        
+        if(post == null)
+        {
+            return BadRequest();
+        }
+
+        _dbContext.GuestUserPosts.Remove(post);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
+
+
     private async Task<string?> ValidateRequestAsync(
         GuestUserPostUpsertRequest request,
         CancellationToken cancellationToken,
